@@ -12,6 +12,7 @@ int line = 1;
 "then"			{ col += yyleng; printf("THEN\n"); }
 "else"			{ col += yyleng; printf("ELSE\n"); }
 [_a-zA-Z][_a-zA-Z0-9]*   { col += yyleng; printf("IDENTIFIER(%s)\n", yytext); }
+"[^'^\n]"               { col += yyleng; printf("CHRLIT(%s)\n", yytext); }
 
 \n			{ line++; col = 0;}
 \t	         	{ col += 1; }
