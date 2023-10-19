@@ -6,11 +6,6 @@ int line = 1;
 %%
 {digit}+                { col += yyleng; printf("NATURAL(%s)\n", yytext); }
 {digit}*"."{digit}*[[eE][+-]{digit}+]*    { col += yyleng; printf("DECIMAL(%s)\n", yytext); }
-"integer"		{ col += yyleng; printf("INTEGER\n"); }
-"double"		{ col += yyleng; printf("DOUBLE\n"); }
-"if"			{ col += yyleng; printf("IF\n"); }
-"then"			{ col += yyleng; printf("THEN\n"); }
-"else"			{ col += yyleng; printf("ELSE\n"); }
 [_a-zA-Z][_a-zA-Z0-9]*                    { col += yyleng; printf("IDENTIFIER(%s)\n", yytext); }
 '([^'^\n]|(\\n|\\t|\"|\\)|\\[0-7]{1,3})'  { col += yyleng; printf("CHRLIT(%s)\n", yytext); }
 
