@@ -35,9 +35,9 @@ RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"d
 <COMMENT>"*/"                                         { col += yyleng; BEGIN(INITIAL); }
 <COMMENT><<EOF>>                                      { col += yyleng; printf("Line %d, column %d: unterminated comment\n", line, col); }
 \/\/.*                                                { col += yyleng; }
-\n			                                          { line++; col = 0;}
-\t	         	                                      { col += 1; }
-[ ]			                                          { col += 1; }
+\n                                                    { line++; col = 0;}
+\t                                                    { col += 1; }
+[ ]                                                   { col += 1; }
 
 "&"                                                   { if(print_tokens) printf("BITWISEAND\n"); col += yyleng; }
 "|"                                                   { if(print_tokens) printf("BITWISEOR\n"); col += yyleng; }
@@ -64,7 +64,7 @@ RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"d
 ","                                                   { if(print_tokens) printf("COMMA\n"); col += yyleng; }
 "/"                                                   { if(print_tokens) printf("DIV\n"); col += yyleng; }
 
-.			                                          { col += yyleng; printf("Line %d, column %d: unrecognized character (%s)\n", line, col, yytext); }
+.                                                     { col += yyleng; printf("Line %d, column %d: unrecognized character (%s)\n", line, col, yytext); }
 %%
 extern int yylex();
 int main(int argc, char **argv) {
