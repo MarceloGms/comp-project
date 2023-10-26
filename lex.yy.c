@@ -892,7 +892,7 @@ YY_RULE_SETUP
 case 3:
 YY_RULE_SETUP
 #line 26 "uccompiler.l"
-{ col += yyleng; printf("NATURAL(%s)\n", yytext); }
+{ col += yyleng; if(print_tokens) printf("NATURAL(%s)\n", yytext); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
@@ -2093,8 +2093,9 @@ void yyfree (void * ptr )
 extern int yylex();
 int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "-l") == 0){
-        yylex();    /* run the lexical analysis automaton */
+        print_tokens = 1;
     }
+    yylex();    /* run the lexical analysis automaton */
     return 0;
 }
 int yywrap() {  /* called on EOF, return 1 to terminate */

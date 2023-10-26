@@ -23,7 +23,7 @@ RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"d
 {RESERVED}                                            { if(print_tokens) printf("RESERVED(%s)\n", yytext); col += yyleng; }
 {reserved}                                            { if(print_tokens) printf("%s\n", uppercase(yytext)); col += yyleng; }
 
-{digit}+                                              { col += yyleng; printf("NATURAL(%s)\n", yytext); }
+{digit}+                                              { col += yyleng; if(print_tokens) printf("NATURAL(%s)\n", yytext); }
 (({digit}*"."{digit}+([eE][+-]?{digit}+)?)|({digit}*"."([eE][+-]?{digit}+))|({digit}+([eE][+-]?{digit}+)))             { col += yyleng; if(print_tokens) printf("DECIMAL(%s)\n", yytext); }
 [_a-zA-Z][_a-zA-Z0-9]*                                { col += yyleng; if(print_tokens) printf("IDENTIFIER(%s)\n", yytext); }
 '([^'\n]|(\\n|\\t|\"|\\)|\\[0-7]{1,3})'               { col += yyleng; if(print_tokens) printf("CHRLIT(%s)\n", yytext); }
@@ -67,8 +67,9 @@ RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"d
 extern int yylex();
 int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "-l") == 0){
-        yylex();    /* run the lexical analysis automaton */
+        print_tokens = 1;
     }
+    yylex();    /* run the lexical analysis automaton */
     return 0;
 }
 int yywrap() {  /* called on EOF, return 1 to terminate */
