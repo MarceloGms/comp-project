@@ -2,3 +2,4 @@ uccompiler
 test.uc
 lex.yy.c
 projeto_v2.pdf
+y.tab.c

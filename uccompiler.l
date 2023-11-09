@@ -3,6 +3,7 @@
 
 %{
 #include <ctype.h>
+#include "y.tab.h"
 
 int col = 0;
 int line = 1;
