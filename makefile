@@ -27,3 +27,10 @@ $(LEX_OUTPUT): $(LEX_SOURCE)
 $(OUTPUT): $(YACC_OUTPUT) $(LEX_OUTPUT)
 	$(CC) $(YACC_OUTPUT) $(LEX_OUTPUT) -o $(OUTPUT)
 
+# Phony target to clean generated files
+.PHONY: clean
+
+clean:
+	rm -f $(YACC_OUTPUT) $(LEX_OUTPUT) $(OUTPUT) y.output y.tab.h
+
+

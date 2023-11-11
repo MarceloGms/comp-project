@@ -1,16 +1,26 @@
-/* definitions */
 %{
 #include <stdio.h>
+extern int yylex(void);
+void yyerror(char *);
+extern char *yytext;
 %}
 
 %token NATURAL
-%token IDENTIFIER
-%token NUMBER 123
 
-%% 
-/* rules */ 
+%%
 
-hello: IDENTIFIER NUMBER { printf("hello\n"); }
-%% 
+calculator: expression                  { printf("%d\n", $1); }
+          ;
 
-/* auxiliary routines */
+expression: NATURAL                     { $$ = $1; }
+          | expression '+' expression   { $$ = $1 + $3; }
+          | expression '-' expression   { $$ = $1 - $3; }
+          | expression '*' expression   { $$ = $1 * $3; }
+          | expression '/' expression   { $$ = $1 / $3; }
+          ;
+
+%%
+
+void yyerror(char *error) {
+    printf("%s '%s'\n", error, yytext);
+}
