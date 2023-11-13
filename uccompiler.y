@@ -1,11 +1,18 @@
 %{
 #include <stdio.h>
+extern int yylex(void);
+void yyerror(char *);
+extern char *yytext;
 %}
 
+%token RESERVED
 %token CHAR INT VOID SHORT DOUBLE
 %token IDENTIFIER NATURAL CHRLIT DECIMAL
 %token LPAR RPAR LBRACE RBRACE SEMI COMMA ASSIGN PLUS MINUS MUL DIV MOD
 %token OR AND BITWISEAND BITWISEOR BITWISEXOR EQ NE LE GE LT GT NOT IF ELSE WHILE RETURN
+%union {
+    char *str;
+}
 
 %start FunctionsAndDeclarations
 
@@ -45,7 +52,8 @@ ParameterList:
     ;
 
 ParameterDeclaration:
-    TypeSpec [IDENTIFIER]
+    TypeSpec IDENTIFIER
+    |TypeSpec
     ;
 
 Declaration:
@@ -57,15 +65,19 @@ TypeSpec:
     ;
 
 Declarator:
-    IDENTIFIER [ASSIGN Expr]
+    IDENTIFIER ASSIGN Expr
+    | IDENTIFIER
     ;
 
 Statement:
-    [Expr] SEMI
+    Expr SEMI
+    | SEMI
     | LBRACE {Statement} RBRACE
-    | IF LPAR Expr RPAR Statement [ELSE Statement]
+    | IF LPAR Expr RPAR Statement ELSE Statement
+    | IF LPAR Expr RPAR Statement
     | WHILE LPAR Expr RPAR Statement
-    | RETURN [Expr] SEMI
+    | RETURN Expr SEMI
+    | RETURN SEMI
     ;
 
 Expr: 
@@ -90,13 +102,14 @@ Expr:
     | PLUS Expr
     | MINUS Expr
     | NOT Expr
-    | IDENTIFIER LPAR Expr RPAR
+    | IDENTIFIER LPAR RPAR
+    | IDENTIFIER LPAR Expr {COMMA Expr} RPAR
     | IDENTIFIER 
     | NATURAL 
     | CHRLIT
     | DECIMAL
+    | LPAR Expr RPAR
     ;
-
 
 %%
  
