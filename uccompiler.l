@@ -1,7 +1,21 @@
+/* Marcelo Gomes 2021222994 */
+/* Pedro Brites 2021226319 */
+
 %{
 #include <ctype.h>
 #include <string.h>
 #include "y.tab.h"
+
+int col = 0;
+int line = 1;
+int l = 0;
+int com_line = 0;
+int com_col = 0;
+
+char * uppercase(char * s) {
+    for (char *p = s; *p; p++) *p = toupper(*p);
+    return s;
+  }
 %}
 
 %X COMMENT
@@ -12,8 +26,8 @@ reserved int|double|if|else|char|while|short|return|void
 RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"do"|"enum"|"extern"|"float"|"for"|"goto"|"inline"|"long"|"register"|"restrict"|"signed"|"sizeof"|"static"|"struct"|"switch"|"typedef"|"union"|"unsigned"|"volatile"|"_Bool"|"_Complex"|"_Imaginary"
 
 %%
-{RESERVED}                                            { col += yyleng; if(l) printf("RESERVED(%s)\n", yytext); return reserved; }
-{reserved}                                            { col += yyleng; if(l) printf("%s\n", uppercase(yytext)); return reserved; }
+{RESERVED}                                            { col += yyleng; if(l) printf("RESERVED(%s)\n", yytext); return RESERVED; }
+{reserved}                                            { col += yyleng; if(l) printf("%s\n", uppercase(yytext)); return RESERVED; }
 
 {digit}+                                              { col += yyleng; if(l) printf("NATURAL(%s)\n", yytext); yylval.str = strdup(yytext); return NATURAL; }
 {decimal}                                             { col += yyleng; if(l) printf("DECIMAL(%s)\n", yytext); yylval.str = strdup(yytext); return DECIMAL; }
@@ -59,10 +73,6 @@ RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"d
 
 .                                                     { col += yyleng; printf("Line %d, column %d: unrecognized character (%s)\n", line, col, yytext); }
 %%
-extern int yylex();
-extern int yylval;
-extern int yywrap();
-int yylineno = 1;  // To keep track of line numbers
 
 int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "-l") == 0){
