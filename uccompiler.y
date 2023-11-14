@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include "ast.h"
 extern int yylex(void);
 void yyerror(char *);
 extern char *yytext;
@@ -12,6 +13,7 @@ extern char *yytext;
 
 %nonassoc LOW
 %nonassoc ELSE
+%nonassoc COMMA
 %left ASSIGN
 %left OR
 %left AND
@@ -23,7 +25,6 @@ extern char *yytext;
 %left PLUS MINUS
 %left MUL DIV MOD
 %right NOT
-%left COMMA
 
 %union {char *str;}
 
@@ -102,6 +103,7 @@ Statement:
     | RETURN SEMI  {}
     ;
 
+//
 IfStatement: IF LPAR Expr RPAR Statement %prec LOW
            | IF LPAR Expr RPAR Statement ELSE Statement
            ;
@@ -137,16 +139,14 @@ Expr: Expr ASSIGN Expr                                              { ; }
     | IDENTIFIER LPAR RPAR                                          { ; }
     | IDENTIFIER                                                    { ; }
     | NATURAL                                                       { ; }
-    | CHRLIT                                                       { ; }
+    | CHRLIT                                                        { ; }
     | DECIMAL                                                       { ; }
     | LPAR Expr RPAR                                                { ; }
     ;
 
 //*
-ExprList: Expr  {}
-        | ExprList COMMA Expr  {}
+ExprList: Expr %prec COMMA {}
+        | ExprList COMMA Expr %prec COMMA {}
         ;
 
 %%
- 
-
