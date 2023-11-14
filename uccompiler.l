@@ -11,23 +11,25 @@ int line = 1;
 int l = 0;
 int com_line = 0;
 int com_col = 0;
-
-char * uppercase(char * s) {
-    for (char *p = s; *p; p++) *p = toupper(*p);
-    return s;
-  }
 %}
 
-%X COMMENT
+%x COMMENT
 
 digit   [0-9]
 decimal (({digit}*"."{digit}+([eE][+-]?{digit}+)?)|({digit}*"."([eE][+-]?{digit}+))|({digit}+([eE][+-]?{digit}+))|{digit}+".")
-reserved int|double|if|else|char|while|short|return|void
 RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"do"|"enum"|"extern"|"float"|"for"|"goto"|"inline"|"long"|"register"|"restrict"|"signed"|"sizeof"|"static"|"struct"|"switch"|"typedef"|"union"|"unsigned"|"volatile"|"_Bool"|"_Complex"|"_Imaginary"
 
 %%
 {RESERVED}                                            { col += yyleng; if(l) printf("RESERVED(%s)\n", yytext); return RESERVED; }
-{reserved}                                            { col += yyleng; if(l) printf("%s\n", uppercase(yytext)); return RESERVED; }
+"int"                                                 { col += yyleng; if(l) printf("(%s)\n", yytext); return INT; }
+"double"                                              { col += yyleng; if(l) printf("(%s)\n", yytext); return DOUBLE; }
+"if"                                                  { col += yyleng; if(l) printf("(%s)\n", yytext); return IF; }
+"else"                                                { col += yyleng; if(l) printf("(%s)\n", yytext); return ELSE; }
+"char"                                                { col += yyleng; if(l) printf("(%s)\n", yytext); return CHAR; }
+"while"                                               { col += yyleng; if(l) printf("(%s)\n", yytext); return WHILE; }
+"short"                                               { col += yyleng; if(l) printf("(%s)\n", yytext); return SHORT; }
+"return"                                              { col += yyleng; if(l) printf("(%s)\n", yytext); return RETURN; }
+"void"                                                { col += yyleng; if(l) printf("(%s)\n", yytext); return VOID; }
 
 {digit}+                                              { col += yyleng; if(l) printf("NATURAL(%s)\n", yytext); yylval.str = strdup(yytext); return NATURAL; }
 {decimal}                                             { col += yyleng; if(l) printf("DECIMAL(%s)\n", yytext); yylval.str = strdup(yytext); return DECIMAL; }
@@ -78,9 +80,13 @@ int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "-l") == 0){
         l = 1;
     }
-    yyparse();   // Use the Yacc parser
+    yyparse();  
     return 0;
 }
-int yywrap() {  // called on EOF, return 1 to terminate
+int yywrap() { 
     return 1;
 }
+
+void yyerror(char *s) {
+    printf ( "Line %d , column %d : %s : %s \n " , line , col , s , yytext );
+} 

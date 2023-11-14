@@ -1,36 +1,19 @@
-# Makefile for uccompiler
+all: yacc lex lexer
 
-# Specify the compiler
-CC = cc
-LEX = lex
-YACC = yacc
+yacc: uccompiler.y
+	yacc -dvtg -Wcounterexamples --report=all uccompiler.y
 
-# Define the source file and output executable
-LEX_SOURCE = uccompiler.l
-LEX_OUTPUT = lex.yy.c
-YACC_SOURCE = uccompiler.y
-YACC_OUTPUT = y.tab.c
-OUTPUT = uccompiler
+lex: uccompiler.l
+	lex uccompiler.l
 
-# Default target
-all: $(OUTPUT)
-
-# Generate y.tab.c from uccompiler.y
-$(YACC_OUTPUT): $(YACC_SOURCE)
-	$(YACC) -dv $(YACC_SOURCE)
-
-# Generate lex.yy.c from uccompiler.l
-$(LEX_OUTPUT): $(LEX_SOURCE)
-	$(LEX) $(LEX_SOURCE)
-
-# Compile the uccompiler executable
-$(OUTPUT): $(YACC_OUTPUT) $(LEX_OUTPUT)
-	$(CC) $(YACC_OUTPUT) $(LEX_OUTPUT) -o $(OUTPUT)
-
-# Phony target to clean generated files
-.PHONY: clean
+lexer: lex.yy.c y.tab.c ast.c
+	cc lex.yy.c y.tab.c ast.c -o lexer -ll -g -Wall -Wextra
 
 clean:
-	rm -f $(YACC_OUTPUT) $(LEX_OUTPUT) $(OUTPUT) y.output y.tab.h
+	rm -f lex.yy.c lexer *.zip y.tab.c y.tab.h y.output y.gv
 
+zip:
+	zip uccompiler.zip uccompiler.l uccompiler.y ast.c ast.h
 
+run:
+	make && clear && ./lexer -t < inp.c

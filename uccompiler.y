@@ -5,24 +5,23 @@ void yyerror(char *);
 extern char *yytext;
 %}
 
-%token RESERVED
 %token CHAR INT VOID SHORT DOUBLE
 %token IDENTIFIER NATURAL CHRLIT DECIMAL
 %token LPAR RPAR LBRACE RBRACE SEMI COMMA ASSIGN PLUS MINUS MUL DIV MOD
 %token OR AND BITWISEAND BITWISEOR BITWISEXOR EQ NE LE GE LT GT NOT IF ELSE WHILE RETURN
-%union {
-    char *str;
-}
+
+%union {char *str;}
 
 %start FunctionsAndDeclarations
 
 %%
 
-FunctionsAndDeclarations:
-    | FunctionDefinition FunctionsAndDeclarations
-    | FunctionDeclaration FunctionsAndDeclarations
-    | Declaration FunctionsAndDeclarations
-    ;
+FunctionsAndDeclarations: FunctionsAndDeclarations FunctionDeclaration
+                      | FunctionsAndDeclarations FunctionDefinition
+                      | FunctionsAndDeclarations Declaration
+                      | FunctionDeclaration
+                      | FunctionDefinition
+                      | Declaration
 
 FunctionDefinition:
     TypeSpec FunctionDeclarator FunctionBody
@@ -43,42 +42,41 @@ FunctionDeclaration:
     TypeSpec FunctionDeclarator SEMI
     ;
 
-FunctionDeclarator:
-    IDENTIFIER LPAR ParameterList RPAR
+FunctionDeclarator: IDENTIFIER LPAR ParameterList RPAR
     ;
 
 ParameterList:
-    ParameterDeclaration {COMMA ParameterDeclaration}
+    ParameterDeclaration;
     ;
 
-ParameterDeclaration:
-    TypeSpec IDENTIFIER
-    |TypeSpec
-    ;
+ParameterDeclaration: COMMA ParameterDeclaration
+                    | TypeSpec IDENTIFIER
+                    | TypeSpec
+                    ;
 
 Declaration:
-    TypeSpec Declarator {COMMA Declarator} SEMI
+    TypeSpec Declarator SEMI
     ;
 
 TypeSpec:
     CHAR | INT | VOID | SHORT | DOUBLE
     ;
 
-Declarator:
-    IDENTIFIER ASSIGN Expr
-    | IDENTIFIER
+Declarator: COMMA Declarator
+            | IDENTIFIER ASSIGN Expr
+            | IDENTIFIER
     ;
 
-Statement:
-    Expr SEMI
-    | SEMI
-    | LBRACE {Statement} RBRACE
-    | IF LPAR Expr RPAR Statement ELSE Statement
-    | IF LPAR Expr RPAR Statement
-    | WHILE LPAR Expr RPAR Statement
-    | RETURN Expr SEMI
-    | RETURN SEMI
-    ;
+Statement: Statement
+        | Expr SEMI
+        | SEMI
+        | LBRACE Statement RBRACE
+        | IF LPAR Expr RPAR Statement ELSE Statement
+        | IF LPAR Expr RPAR Statement
+        | WHILE LPAR Expr RPAR Statement
+        | RETURN Expr SEMI
+        | RETURN SEMI
+        ;
 
 Expr: 
     Expr ASSIGN Expr
@@ -103,7 +101,8 @@ Expr:
     | MINUS Expr
     | NOT Expr
     | IDENTIFIER LPAR RPAR
-    | IDENTIFIER LPAR Expr {COMMA Expr} RPAR
+    | IDENTIFIER LPAR Expr RPAR
+    | IDENTIFIER LPAR Expr COMMA Expr RPAR
     | IDENTIFIER 
     | NATURAL 
     | CHRLIT
@@ -113,6 +112,4 @@ Expr:
 
 %%
  
-void yyerror(char *error) {
-    printf("%s '%s'\n", error, yytext);
-} 
+
