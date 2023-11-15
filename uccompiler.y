@@ -3,7 +3,7 @@
 #include "ast.h"
 extern int yylex(void);
 void yyerror(char *);
-extern char *yytext;
+struct node *program;
 %}
 
 %token CHAR INT VOID SHORT DOUBLE
