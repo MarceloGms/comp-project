@@ -41,7 +41,7 @@ RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"d
 {decimal}                                             { col_lex += yyleng; if(l) printf("DECIMAL(%s)\n", yytext); yylval.str = strdup(yytext); return DECIMAL; }
 [_a-zA-Z][_a-zA-Z0-9]*                                { col_lex += yyleng; if(l) printf("IDENTIFIER(%s)\n", yytext); yylval.str = strdup(yytext); return IDENTIFIER; }
 '([^'\n]|(\\n|\\t|\\\"|\\\\|\\\')|\\[0-7]{1,3})'      { col_lex += yyleng; if(l) printf("CHRLIT(%s)\n", yytext); yylval.str = strdup(yytext); return CHRLIT; }
-'(([^'\n]|(\\n|\\t|\\\"|\\\\|\\\')|\\[0-7]{1,3})|\\[^\n'])*'                                                    { col_lex += yyleng; printf("Line %d, column %d: invalid char constant (%s)\n", line_lex, col_lex, yytext); }
+''                                                    { col_lex += yyleng; printf("Line %d, column %d: invalid char constant (%s)\n", line_lex, col_lex, yytext); }
 '([^'\n]|(\\n|\\t|\\\"|\\\\|\\\')|\\[0-7]{1,3})       { col_lex += yyleng; printf("Line %d, column %d: unterminated char constant\n", line_lex, col_lex); }
 
 "/*"                                                  { col_lex += yyleng; BEGIN(COMMENT); com_line = line_lex; com_col = col_lex - 1; }
