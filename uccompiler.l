@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "y.tab.h"
+#include "ast.h"
 
 int col = 0;
 int line = 1;

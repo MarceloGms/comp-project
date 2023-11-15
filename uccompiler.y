@@ -33,15 +33,15 @@ extern char *yytext;
 %%
 
 FunctionsAndDeclarations: FunctionsAndDeclarations FunctionDeclaration
-                       | FunctionsAndDeclarations FunctionDefinition
-                       | FunctionsAndDeclarations Declaration
-                       | FunctionDeclaration
-                       | FunctionDefinition
-                       | Declaration
-                       ;
+                        | FunctionsAndDeclarations FunctionDefinition
+                        | FunctionsAndDeclarations Declaration
+                        | FunctionDeclaration
+                        | FunctionDefinition
+                        | Declaration
+                        ;
 
 FunctionDefinition: TypeSpec FunctionDeclarator FunctionBody
-                    ;
+                  ;
 
 FunctionBody: LBRACE RBRACE
             | LBRACE DeclarationsAndStatements RBRACE
@@ -53,55 +53,49 @@ DeclarationsAndStatements: Statement DeclarationsAndStatements
                          | Declaration
                          ;
 
-FunctionDeclaration:
-    TypeSpec FunctionDeclarator SEMI
-    ;
+FunctionDeclaration: TypeSpec FunctionDeclarator SEMI
+                   ;
 
 FunctionDeclarator: IDENTIFIER LPAR ParameterList RPAR
-    ;
+                  ;
 
 //*
-ParameterList:
-    ParameterDeclaration   {}
-    | ParameterList COMMA ParameterDeclaration {}
-    ;
+ParameterList: ParameterDeclaration   {}
+             | ParameterList COMMA ParameterDeclaration {}
+             ;
 
-ParameterDeclaration:TypeSpec IDENTIFIER
+ParameterDeclaration: TypeSpec IDENTIFIER
                     | TypeSpec
                     ;
 
-Declaration:
-    TypeSpec DeclarationList SEMI  {}
-    ;
+Declaration: TypeSpec DeclarationList SEMI  {}
+           ;
 
 //*
-DeclarationList:
-    Declarator {}
-    | DeclarationList COMMA Declarator {}
-    ;
+DeclarationList: Declarator {}
+               | DeclarationList COMMA Declarator {}
+               ;
 
-TypeSpec:
-    CHAR 
-    | INT 
-    | VOID 
-    | SHORT 
-    | DOUBLE
-    ;
+TypeSpec: CHAR 
+        | INT 
+        | VOID 
+        | SHORT 
+        | DOUBLE
+        ;
 
 Declarator: IDENTIFIER
           | IDENTIFIER ASSIGN Expr
           ;
 
-Statement:
-    Expr SEMI  {}
-    | SEMI {}
-    | LBRACE RBRACE
-    | LBRACE StatementList RBRACE  {}
-    | IfStatement 
-    | WHILE LPAR Expr RPAR Statement   {}
-    | RETURN Expr SEMI {}
-    | RETURN SEMI  {}
-    ;
+Statement: Expr SEMI  {}
+         | SEMI {}
+         | LBRACE RBRACE
+         | LBRACE StatementList RBRACE  {}
+         | IfStatement 
+         | WHILE LPAR Expr RPAR Statement   {}
+         | RETURN Expr SEMI {}
+         | RETURN SEMI  {}
+         ;
 
 //
 IfStatement: IF LPAR Expr RPAR Statement %prec LOW
@@ -109,10 +103,9 @@ IfStatement: IF LPAR Expr RPAR Statement %prec LOW
            ;
 
 //*
-StatementList:
-    Statement  {}
-    | StatementList Statement  {}
-    ;
+StatementList: Statement  {}
+             | StatementList Statement  {}
+             ;
 
 Expr: Expr ASSIGN Expr                                              { ; }
     | Expr COMMA Expr                                               { ; }
