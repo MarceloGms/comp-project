@@ -1,4 +1,8 @@
-0a1,1054
+1,2c1,1054
+< Line -1 , column -1 : syntax error : , 
+<  
+\ No newline at end of file
+---
 > Program
 > ..Declaration
 > ....Short

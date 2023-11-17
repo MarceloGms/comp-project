@@ -2,7 +2,7 @@
 
 # before running this script, make sure you have a makefile and the you have run the isolate_folders.sh script
 meta="meta2" # Change this to the meta folder you want to test
-executable="./lexer" # Change this to your executable
+executable="./uccompiler" # Change this to your executable
 count=0
 passed=0
 RED='\033[0;31m'

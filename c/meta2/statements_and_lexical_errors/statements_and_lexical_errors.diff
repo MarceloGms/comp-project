@@ -1,7 +1,8 @@
-0a1,137
-> Line 26, column 2: unrecognized character ($)
-> Line 30, column 3: unrecognized character (:)
-> Line 35, column 2: unrecognized character (@)
+4,5c4,137
+< Line -1 , column -1 : syntax error : , 
+<  
+\ No newline at end of file
+---
 > Program
 > ..FuncDefinition
 > ....Void

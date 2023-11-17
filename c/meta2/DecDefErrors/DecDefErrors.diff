@@ -1,4 +1,8 @@
-0a1,6
+1,2c1,6
+< Line -1 , column -1 : syntax error : intttt 
+<  
+\ No newline at end of file
+---
 > Line 1, column 1: syntax error: intttt
 > Line 2, column 1: unrecognized character ($)
 > Line 3, column 18: syntax error: ;
