@@ -15,7 +15,7 @@ struct node *program;
 %token IDENTIFIER NATURAL CHRLIT DECIMAL
 %token LPAR RPAR LBRACE RBRACE SEMI COMMA ASSIGN PLUS MINUS MUL DIV MOD
 %token OR AND BITWISEAND BITWISEOR BITWISEXOR EQ NE LE GE LT GT NOT IF ELSE WHILE RETURN
-%type<node> FunctionsAndDeclarations FunctionDefinition FunctionBody DeclarationsAndStatements FunctionDeclaration FunctionDeclarator ParameterList ParameterDeclaration Declaration TypeSpec Declarator Statement StatementList Expr
+%type<node> FunctionsAndDeclarations FunctionDefinition FunctionBody DeclarationsAndStatements FunctionDeclaration FunctionDeclarator ParameterList ParameterDeclaration Declaration DeclarationList TypeSpec Declarator Statement StatementList Expr ExprList
 
 
 %nonassoc LOW
@@ -58,36 +58,44 @@ FunctionBody: LBRACE DeclarationsAndStatements RBRACE                  { $$ = ne
             | LBRACE RBRACE                                            { $$ = newnode(FuncBody, NULL); }
             ;
 
-DeclarationsAndStatements: Statement DeclarationsAndStatements         { $$ = $1; 
-                                                                       addchild($$, $2); }
-                         | Declaration DeclarationsAndStatements       { $$ = $1; 
-                                                                       addchild($$, $2); }
-                         | Statement                                   
-                         | Declaration
+DeclarationsAndStatements: Statement                                   { addchild($$, $1); }
+                         | Declaration                                 { addchild($$, $1); }
+                         | Statement DeclarationsAndStatements         { $$ = $2;}
+                         | Declaration DeclarationsAndStatements       { $$ = $2;}
                          ;
 
 FunctionDeclaration:
-    TypeSpec FunctionDeclarator SEMI                                    {}
+    TypeSpec FunctionDeclarator SEMI                                    {$$ = newnode(FuncDeclaration, NULL);
+                                                                        addchild($$, $1);
+                                                                        addchild($$, $2);}
     ;
 
-FunctionDeclarator: IDENTIFIER LPAR ParameterList RPAR 
+FunctionDeclarator: IDENTIFIER LPAR ParameterList RPAR                  {$$ = newnode(ParamList, NULL);
+                                                                        /*addchild($$, newnode(Identifier, $1)*/;
+                                                                        addchild($$, $3);}
                     ;
 
 ParameterList:
-    ParameterDeclaration  
-    | ParameterList COMMA ParameterDeclaration
+    ParameterDeclaration                                                {$$ = newnode(ParamDeclaration, NULL);
+                                                                        addchild($$, $1);}
+    | ParameterList COMMA ParameterDeclaration                          {$$ = $1;
+                                                                        addchild($$, $3);}
     ;
 
-ParameterDeclaration:TypeSpec IDENTIFIER
-                    | TypeSpec
+ParameterDeclaration:TypeSpec IDENTIFIER                                {$$ = newnode(ParamDeclaration, NULL);
+                                                                        addchild($$, $1);
+                                                                        /*addchild($$, newnode(Identifier, $2));*/}
+                    | TypeSpec                                          {$$ = newnode(ParamDeclaration, NULL);
+                                                                        addchild($$, $1);}
                     ;
 
-Declaration:
-    TypeSpec DeclarationList SEMI  {}
+Declaration: TypeSpec DeclarationList SEMI                              {$$ = newnode(Declaration, NULL);
+                                                                        addchild($$, $1);
+                                                                        addchild($$, $2);}
     ;
 
 DeclarationList:
-    Declarator {}
+    Declarator                                                          
     | DeclarationList COMMA Declarator {}
     ;
 
@@ -99,19 +107,27 @@ TypeSpec:
     | DOUBLE                        { $$ = newnode(Double, NULL); }
     ;
 
-Declarator: IDENTIFIER
-          | IDENTIFIER ASSIGN Expr
+Declarator: IDENTIFIER                                                  {$$ = newnode(Declaration, NULL);
+                                                                        /*addchild($1, newnode(Identifier, $1));*/}    
+          | IDENTIFIER ASSIGN Expr                                      {$$ = newnode(Declaration, NULL);
+                                                                        /*addchild($1, newnode(Identifier, $1));*/
+                                                                        addchild($$, $3);}
           ;
 
 Statement:
-    Expr SEMI
-    | SEMI
-    | LBRACE RBRACE
-    | LBRACE StatementList RBRACE  {}
-    | IfStatement 
-    | WHILE LPAR Expr RPAR Statement   {}
-    | RETURN Expr SEMI {}
-    | RETURN SEMI  {}
+    Expr SEMI                                                           {$$ = newnode(StatList, NULL);
+                                                                         addchild($$, $1);}
+    | SEMI                                                              {$$ = newnode(StatList, NULL);}
+    | LBRACE RBRACE                                                     {$$ = newnode(StatList, NULL);}    
+    | LBRACE StatementList RBRACE                                       {$$ = newnode(StatList, NULL);
+                                                                        addchild($$, $2);}
+    | IfStatement                                                       {$$ = newnode(If, NULL);} 
+    | WHILE LPAR Expr RPAR Statement                                    {$$ = newnode(While, NULL);
+                                                                        addchild($$, $3);
+                                                                        addchild($$, $5);}
+    | RETURN Expr SEMI                                                  {$$ = newnode(Return, NULL);
+                                                                        addchild($$, $2);}
+    | RETURN SEMI                                                       {$$ = newnode(Return, NULL);}
     ;
 
 IfStatement: IF LPAR Expr RPAR Statement %prec LOW
@@ -181,8 +197,8 @@ Expr: Expr ASSIGN Expr
                                       addchild($$, $2); }                              
     | NOT Expr                        { $$ = newnode(Not, NULL);
                                       addchild($$, $2); }                              
-    | IDENTIFIER LPAR ExprList RPAR                               
-    | IDENTIFIER LPAR RPAR                                        
+    | IDENTIFIER LPAR ExprList RPAR   { $$ = $3;}                            
+    | IDENTIFIER LPAR RPAR            { $$ = NULL;}                            
     | IDENTIFIER                      { $$ = newnode(Identifier, NULL); }                             
     | NATURAL                         { $$ = newnode(Natural, NULL); }                              
     | CHRLIT                          { $$ = newnode(ChrLit, NULL); }                             
