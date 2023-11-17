@@ -1,8 +1,0 @@
-2,3c2,4
-< Line -1 , column -1 : syntax error : ) 
-<  
-\ No newline at end of file
----
-> Line 3, column 9: syntax error: )
-> Line 5, column 9: syntax error: int
-> Line 7, column 8: syntax error: ;
