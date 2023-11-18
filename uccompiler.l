@@ -6,7 +6,10 @@
 #include <string.h>
 #include "y.tab.h"
 #include "ast.h"
-#define YY_USER_ACTION { line_syn = yylloc.first_line = line_lex; col_syn = yylloc.first_column = col_lex; }
+#define YY_USER_ACTION { line_syn = yylloc.first_line = line_lex; col_syn = yylloc.first_column = col_lex+1; }
+
+int yyparse(void);
+void yyerror(char *);
 
 int col_lex = 0;
 int line_lex = 1;
@@ -20,6 +23,7 @@ int errors = 0;
 extern struct node *program;
 %}
 
+%option noyywrap
 %x COMMENT
 
 digit   [0-9]
@@ -81,11 +85,13 @@ RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"d
 "/"                                                   { col_lex += yyleng; if(l) printf("DIV\n"); return DIV; }
 
 .                                                     { col_lex += yyleng; printf("Line %d, column %d: unrecognized character (%s)\n", line_lex, col_lex, yytext); }
+<<EOF>>                                               { YY_USER_ACTION; return 0; }
+
 %%
 
 void yyerror(char *s) {
     errors++;
-    printf ( "Line %d , column %d : %s : %s \n " , line_syn , col_syn , s , yytext );
+    printf ("Line %d, column %d: %s: %s\n" , line_syn , col_syn , s , yytext);
 } 
 
 int main(int argc, char **argv) {
