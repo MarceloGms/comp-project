@@ -12,7 +12,7 @@ struct node *program;
 }
 
 %token CHAR INT VOID SHORT DOUBLE
-%token IDENTIFIER NATURAL CHRLIT DECIMAL
+%token<str> IDENTIFIER NATURAL CHRLIT DECIMAL
 %token LPAR RPAR LBRACE RBRACE SEMI COMMA ASSIGN PLUS MINUS MUL DIV MOD
 %token OR AND BITWISEAND BITWISEOR BITWISEXOR EQ NE LE GE LT GT NOT IF ELSE WHILE RETURN
 %type<node> FunctionsAndDeclarations FunctionDefinition FunctionBody DeclarationsAndStatements FunctionDeclaration FunctionDeclarator ParameterList ParameterDeclaration Declaration DeclarationList TypeSpec Declarator Statement StatementList Expr ExprList
@@ -33,12 +33,15 @@ struct node *program;
 %left MUL DIV MOD
 %right NOT
 
-%start FunctionsAndDeclarations
+%locations
+%{
+#define LOCATE(node, line, column) { node->token_line = line; node->token_column = column; }
+%}
 
 %%
 
-FunctionsAndDeclarations: FunctionsAndDeclarations FunctionDeclaration   {$$ = program = newnode(Program, NULL); 
-                                                                         addchild(program, $1);}
+FunctionsAndDeclarations: FunctionsAndDeclarations FunctionDeclaration   { $$ = program = newnode(Program, NULL); 
+                                                                         addchild(program, $1); }
                        | FunctionsAndDeclarations FunctionDefinition
                        | FunctionsAndDeclarations Declaration
                        | FunctionDeclaration
@@ -50,7 +53,7 @@ FunctionDefinition: TypeSpec FunctionDeclarator FunctionBody           { $$ = $1
                                                                        struct node *function = newnode(FuncDefinition, NULL);
                                                                        addchild(function, $2);
                                                                        addchild(function, $3);
-                                                                       addchild($$, function); }
+                                                                       addchild($$, function); printf("b\n"); }
                     ;
 
 FunctionBody: LBRACE DeclarationsAndStatements RBRACE                  { $$ = newnode(FuncBody, NULL);
@@ -77,12 +80,12 @@ FunctionDeclarator: IDENTIFIER LPAR ParameterList RPAR                  {$$ = ne
 
 ParameterList:
     ParameterDeclaration                                                {$$ = newnode(ParamDeclaration, NULL);
-                                                                        addchild($$, $1);}
+                                                                        addchild($$, $1); printf("f\n");}
     | ParameterList COMMA ParameterDeclaration                          {$$ = $1;
                                                                         addchild($$, $3);}
     ;
 
-ParameterDeclaration:TypeSpec IDENTIFIER                                {$$ = newnode(ParamDeclaration, NULL);
+ParameterDeclaration:TypeSpec IDENTIFIER                                {$$ = newnode(ParamDeclaration, NULL); printf("d\n");
                                                                         addchild($$, $1);
                                                                         /*addchild($$, newnode(Identifier, $2));*/}
                     | TypeSpec                                          {$$ = newnode(ParamDeclaration, NULL);
@@ -91,7 +94,8 @@ ParameterDeclaration:TypeSpec IDENTIFIER                                {$$ = ne
 
 Declaration: TypeSpec DeclarationList SEMI                              {$$ = newnode(Declaration, NULL);
                                                                         addchild($$, $1);
-                                                                        addchild($$, $2);}
+                                                                        addchild($$, $2); printf("a\n");}
+    | error SEMI                                                        { ; }
     ;
 
 DeclarationList:
@@ -101,7 +105,7 @@ DeclarationList:
 
 TypeSpec:
     CHAR                            { $$ = newnode(Char, NULL); } 
-    | INT                           { $$ = newnode(Void, NULL); }
+    | INT                           { $$ = newnode(Void, NULL); printf("c\n");}
     | VOID                          { $$ = newnode(Int, NULL); }
     | SHORT                         { $$ = newnode(Short, NULL); }
     | DOUBLE                        { $$ = newnode(Double, NULL); }
@@ -135,8 +139,8 @@ IfStatement: IF LPAR Expr RPAR Statement %prec LOW
            ;
 
 StatementList:
-    Statement  {}
-    | StatementList Statement  {}
+    Statement  {printf("h\n");}
+    | StatementList Statement  {printf("i\n");}
     ;
 
 Expr: Expr ASSIGN Expr                
@@ -179,7 +183,7 @@ Expr: Expr ASSIGN Expr
     | Expr NE Expr                    { $$ = newnode(Ne, NULL);
                                       addchild($$, $1);
                                       addchild($$, $3); }                              
-    | Expr LE Expr                    { $$ = newnode(Le, NULL);
+    | Expr LE Expr                    { $$ = newnode(Le, NULL); printf("g\n");
                                       addchild($$, $1);
                                       addchild($$, $3); }                              
     | Expr GE Expr                    { $$ = newnode(Ge, NULL);
@@ -199,7 +203,7 @@ Expr: Expr ASSIGN Expr
                                       addchild($$, $2); }                              
     | IDENTIFIER LPAR ExprList RPAR   { $$ = $3;}                            
     | IDENTIFIER LPAR RPAR            { $$ = NULL;}                            
-    | IDENTIFIER                      { $$ = newnode(Identifier, NULL); }                             
+    | IDENTIFIER                      { $$ = newnode(Identifier, NULL); printf("e\n");}                             
     | NATURAL                         { $$ = newnode(Natural, NULL); }                              
     | CHRLIT                          { $$ = newnode(ChrLit, NULL); }                             
     | DECIMAL                         { $$ = newnode(Decimal, NULL); }                            
