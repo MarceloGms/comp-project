@@ -98,6 +98,7 @@ int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "-l") == 0){
         l = 1;
     }
+    yydebug = 1;
     yyparse();
     if(argc > 1 && strcmp(argv[1], "-t") == 0 && errors == 0) {
         show(program, 0);
