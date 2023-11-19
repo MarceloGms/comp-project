@@ -11,6 +11,7 @@ struct node *program;
     struct node *node;
 }
 
+%token RESERVED
 %token CHAR INT VOID SHORT DOUBLE
 %token<str> IDENTIFIER NATURAL CHRLIT DECIMAL
 %token LPAR RPAR LBRACE RBRACE SEMI COMMA ASSIGN PLUS MINUS MUL DIV MOD
@@ -146,7 +147,6 @@ StatementList: StatementError
 StatementError: error SEMI
               | Statement
               ;
-
 
 Expr: Expr ASSIGN Expr                
     | Expr COMMA Expr                 /*{ $$ = newnode(Comma, NULL);

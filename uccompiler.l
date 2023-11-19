@@ -31,7 +31,7 @@ decimal (({digit}*"."{digit}+([eE][+-]?{digit}+)?)|({digit}*"."([eE][+-]?{digit}
 RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"do"|"enum"|"extern"|"float"|"for"|"goto"|"inline"|"long"|"register"|"restrict"|"signed"|"sizeof"|"static"|"struct"|"switch"|"typedef"|"union"|"unsigned"|"volatile"|"_Bool"|"_Complex"|"_Imaginary"
 
 %%
-{RESERVED}                                            { col_lex += yyleng; if(l) printf("RESERVED(%s)\n", yytext); }
+{RESERVED}                                            { col_lex += yyleng; if(l) printf("RESERVED(%s)\n", yytext); return RESERVED; }
 "int"                                                 { col_lex += yyleng; if(l) printf("(%s)\n", yytext); return INT; }
 "double"                                              { col_lex += yyleng; if(l) printf("(%s)\n", yytext); return DOUBLE; }
 "if"                                                  { col_lex += yyleng; if(l) printf("(%s)\n", yytext); return IF; }
