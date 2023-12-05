@@ -97,13 +97,17 @@ void yyerror(char *s) {
 int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "-l") == 0){
         l = 1;
-    }
-    yydebug = 1;
+    }/*else if (argc > 1 && strcmp(argv[1], "-s") == 0){
+        s = 1;
+    }*/
     yyparse();
     if(argc > 1 && strcmp(argv[1], "-t") == 0 && errors == 0) {
+        //deallocate(program);
+        //printf("PEGA");
         show(program, 0);
     }
-    deallocate(program);
+
+    //deallocate(program);
     yylex_destroy();  
     return 0;
 }

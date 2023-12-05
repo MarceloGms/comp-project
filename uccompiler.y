@@ -16,13 +16,13 @@ struct node *program;
 %token<str> IDENTIFIER NATURAL CHRLIT DECIMAL
 %token LPAR RPAR LBRACE RBRACE SEMI COMMA ASSIGN PLUS MINUS MUL DIV MOD
 %token OR AND BITWISEAND BITWISEOR BITWISEXOR EQ NE LE GE LT GT NOT IF ELSE WHILE RETURN
-%type<node> FunctionsAndDeclarations FunctionDefinition FunctionBody DeclarationsAndStatements FunctionDeclaration FunctionDeclarator ParameterList ParameterDeclaration Declaration DeclarationList TypeSpec Declarator Statement StatementList Expr ExprList StatementError
+%type<node> FunctionsAndDeclarations FunctionDefinition FunctionBody DeclarationsAndStatements FunctionDeclaration FunctionDeclarator ParameterList ParameterDeclaration Declaration DeclarationList TypeSpec Declarator Statement StatementList Expr ExprList StatementError IfStatement
 
 
 %nonassoc LOW
 %nonassoc ELSE
 %left COMMA
-%left ASSIGN
+%right ASSIGN
 %left OR
 %left AND
 %left BITWISEOR
@@ -32,7 +32,9 @@ struct node *program;
 %left LE GE LT GT
 %left PLUS MINUS
 %left MUL DIV MOD
-%right NOT HIGH
+%left HIGH
+%right NOT
+
 
 %locations
 %{
@@ -40,52 +42,54 @@ struct node *program;
 %}
 
 %%
-
-FunctionsAndDeclarations: FunctionsAndDeclarations FunctionDeclaration   { $$ = program = newnode(Program, NULL); 
-                                                                         addchild(program, $1); }
-                       | FunctionsAndDeclarations FunctionDefinition
-                       | FunctionsAndDeclarations Declaration
-                       | FunctionDeclaration
-                       | FunctionDefinition
-                       | Declaration                                        { $$ = program = newnode(Program, NULL);
-                                                                        addchild($$, $1); }
+//CERTO 99%(FRED CONFIRM)
+FunctionsAndDeclarations: Declaration                                   { $$ = program = newnode(Program, NULL);
+                                                                        inheritChilds(program, $1); }
+                        | FunctionsAndDeclarations Declaration          {inheritChilds(program, $2); } 
+                        | FunctionDefinition                            { $$ = program = newnode(Program, NULL);
+                                                                        addchild(program, $1); }
+                        | FunctionsAndDeclarations FunctionDefinition   { addchild(program, $2); }
+                        | FunctionDeclaration                           { $$ = program = newnode(Program, NULL);
+                                                                        addchild(program, $1); } 
+                        | FunctionsAndDeclarations FunctionDeclaration  { addchild(program, $2); }
                        ;
 
 FunctionDefinition: TypeSpec FunctionDeclarator FunctionBody           { $$ = newnode(FuncDefinition, NULL);
                                                                            addchild($$, $1);
-                                                                           addchild($$, $2->children->next->node);
-                                                                           addchild($$, $2->children->next->next->node);
+                                                                           inheritChilds($$, $2);
                                                                            addchild($$, $3); }
                     ;
 
 FunctionBody: LBRACE DeclarationsAndStatements RBRACE                  { $$ = newnode(FuncBody, NULL);
-                                                                       addchild($$, $2); }
+                                                                       inheritChilds($$, $2);}
             | LBRACE RBRACE                                            { $$ = newnode(FuncBody, NULL); }
             ;
 
-DeclarationsAndStatements: Statement                                   { $$ = $1; }
-                         | Declaration                                 { $$ = $1; }
-                         | Statement DeclarationsAndStatements         { $$ = $2;}
-                         | Declaration DeclarationsAndStatements       { $$ = $2;}
+DeclarationsAndStatements: DeclarationsAndStatements Statement         { $$ = $1;
+                                                                       addChildNull($$, $2, 0);}
+                         | DeclarationsAndStatements Declaration       { $$ = $1;
+                                                                       inheritChilds($$, $2); }
+                         | Statement                                   { $$ = newnode(Temp, NULL); 
+                                                                       addChildNull($$, $1, 0); }
+                         | Declaration                                 { $$ = newnode(Temp, NULL); 
+                                                                       inheritChilds($$, $1);}
                          ;
 
 FunctionDeclaration:
     TypeSpec FunctionDeclarator SEMI                                    {$$ = newnode(FuncDeclaration, NULL);
                                                                         addchild($$, $1);
-                                                                        addchild($$, $2->children->next->node);
-                                                                        addchild($$, $2->children->next->next->node);}
+                                                                        inheritChilds($$, $2);}
     ;
 
-FunctionDeclarator: IDENTIFIER LPAR ParameterList RPAR                  {struct node *temp = newnode(Call, NULL);
-                                                                        addchild(temp, newnode(Identifier, $1));
-                                                                        addchild(temp, $3);
-                                                                        $$ = temp;}
+FunctionDeclarator: IDENTIFIER LPAR ParameterList RPAR                  {$$ = newnode(Temp, NULL);
+                                                                        addchild($$, newnode(Identifier, $1));
+                                                                        addchild($$, $3);}
                     ;
 
 ParameterList:
-    ParameterDeclaration                                                {$$ = newnode(ParamDeclaration, NULL);
+    ParameterDeclaration                                                {$$ = newnode(ParamList, NULL);
                                                                         addchild($$, $1);}
-    | ParameterList COMMA ParameterDeclaration                          { ; }
+    | ParameterList COMMA ParameterDeclaration                          { addchild($$, $3); }
     ;
 
 ParameterDeclaration:TypeSpec IDENTIFIER                                {$$ = newnode(ParamDeclaration, NULL);
@@ -95,62 +99,72 @@ ParameterDeclaration:TypeSpec IDENTIFIER                                {$$ = ne
                                                                         addchild($$, $1);}
                 
 
-Declaration: TypeSpec DeclarationList SEMI                              {$$ = newnode(Declaration, NULL);
-                                                                        addchild($$, $1);
-                                                                        addchild($$, $2);}
+Declaration: TypeSpec DeclarationList SEMI                              {$$ = newnode(Temp, NULL); 
+                                                                        addTypeToDeclarators($2, $1);
+                                                                        inheritChilds($$, $2);}
     | error SEMI                                                        { $$ = newnode(Error, NULL); }
     ;
 
 DeclarationList:
-    Declarator                                                          
-    | DeclarationList COMMA Declarator {}
+    Declarator                                                          {$$ = newnode(Temp, NULL);
+                                                                        addchild($$, $1);}                                                 
+    | DeclarationList COMMA Declarator                                  {addchild($$, $3);}
     ;
 
 TypeSpec:
     CHAR                            { $$ = newnode(Char, NULL); }
-    | INT                           { $$ = newnode(Void, NULL);}
-    | VOID                          { $$ = newnode(Int, NULL); }
+    | INT                           { $$ = newnode(Int, NULL);}
+    | VOID                          { $$ = newnode(Void, NULL); }
     | SHORT                         { $$ = newnode(Short, NULL); }
     | DOUBLE                        { $$ = newnode(Double, NULL); }
     ;
 
 Declarator: IDENTIFIER                                                  {$$ = newnode(Declaration, NULL);
-                                                                        addchild($$, newnode(Identifier, $1));}  
-          | IDENTIFIER ASSIGN Expr                                      {$$ = newnode(Declaration, NULL);
+                                                                        addchild($$, newnode(Identifier, $1));}
+           |IDENTIFIER ASSIGN Expr                                      {$$ = newnode(Declaration, NULL);
                                                                         addchild($$, newnode(Identifier, $1));
                                                                         addchild($$, $3);}
-          ;
+            ;  
 
-Statement:
-    Expr SEMI                                                           {$$ = newnode(StatList, NULL);
-                                                                         addchild($$, $1);}
-    | SEMI                                                              {$$ = newnode(StatList, NULL);}
-    | LBRACE RBRACE                                                     {$$ = newnode(StatList, NULL);}    
-    | LBRACE StatementList RBRACE                                       {$$ = newnode(StatList, NULL);
-                                                                        addchild($$, $2);}
+Statement: SEMI                                                         { $$ = NULL; }
+    | Expr SEMI                                                         { $$ = $1; }
+    | LBRACE RBRACE                                                     { $$ = NULL; } 
+    | IfStatement                                                       { $$ = $1;}    
+    | LBRACE StatementList RBRACE                                       { $$ = $2; 
+                                                                        if($$->children->next == NULL) $$ = NULL;
+                                                                        else if(countChildren($$) <= 1) $$ = $$->children->next->node;}
     | LBRACE error RBRACE                                               { $$ = newnode(Error, NULL); }
-    | IfStatement                                                       {$$ = newnode(If, NULL);} 
     | WHILE LPAR Expr RPAR Statement                                    {$$ = newnode(While, NULL);
                                                                         addchild($$, $3);
-                                                                        addchild($$, $5);}
+                                                                        addChildNull($$, $5, 1);}
     | RETURN Expr SEMI                                                  {$$ = newnode(Return, NULL);
                                                                         addchild($$, $2);}
-    | RETURN SEMI                                                       {$$ = newnode(Return, NULL);}
+    | RETURN SEMI                                                       {$$ = newnode(Return, NULL);
+                                                                        addchild($$, newnode(Null, NULL));}
     ;
 
-IfStatement: IF LPAR Expr RPAR Statement %prec LOW
-           | IF LPAR Expr RPAR Statement ELSE Statement
+IfStatement: IF LPAR Expr RPAR Statement %prec LOW                      { $$ = newnode(If, NULL);
+                                                                        addchild($$, $3);
+                                                                        addChildNull($$, $5, 1);
+                                                                        addchild($$, newnode(Null, NULL));}
+           | IF LPAR Expr RPAR Statement ELSE Statement                 { $$ = newnode(If, NULL);
+                                                                        addchild($$, $3);
+                                                                        addChildNull($$, $5, 1);
+                                                                        addChildNull($$, $7, 1); }
            ;
 
-StatementList: StatementError  
-             | StatementList StatementError  
+StatementList: StatementError                                           {$$ = newnode(StatList, NULL);
+                                                                        addChildNull($$, $1, 0);}
+             | StatementList StatementError                             {addChildNull($$, $2, 0);}
              ;
 
 StatementError: error SEMI                                              { $$ = newnode(Error, NULL); }
-              | Statement
+              | Statement                                               { $$ = $1; }
               ;
 
-Expr: Expr ASSIGN Expr                
+Expr: Expr ASSIGN Expr                { $$ = newnode(Store, NULL);
+                                      addchild($$, $1);
+                                      addchild($$, $3); }
     | Expr COMMA Expr                 { $$ = newnode(Comma, NULL);
                                       addchild($$, $1);
                                       addchild($$, $3); }                         
@@ -202,25 +216,29 @@ Expr: Expr ASSIGN Expr
     | Expr GT Expr                    { $$ = newnode(Gt, NULL);
                                       addchild($$, $1);
                                       addchild($$, $3); }                            
-    | PLUS Expr                       { $$ = newnode(Plus, NULL);
+    | PLUS Expr %prec HIGH            { $$ = newnode(Plus, NULL);
                                       addchild($$, $2); }                             
-    | MINUS Expr                      { $$ = newnode(Minus, NULL);
+    | MINUS Expr %prec HIGH           { $$ = newnode(Minus, NULL);
                                       addchild($$, $2); }                            
     | NOT Expr                        { $$ = newnode(Not, NULL);
                                       addchild($$, $2); }                          
-    | IDENTIFIER LPAR ExprList RPAR   { $$ = $3;}                            
-    | IDENTIFIER LPAR RPAR            { $$ = NULL;}
+    | IDENTIFIER LPAR ExprList RPAR   { $$ = newnode(Call, NULL); 
+                                        addchild($$, newnode(Identifier, $1)); 
+                                        inheritChilds($$, $3); }                    
+    | IDENTIFIER LPAR RPAR            { $$ = newnode(Call, NULL); 
+                                        addchild($$, newnode(Identifier, $1)); 
+                                      }
     | IDENTIFIER LPAR error RPAR      { $$ = newnode(Error, NULL); }
     | LPAR error RPAR                 { $$ = newnode(Error, NULL); }        
-    | IDENTIFIER                      { $$ = newnode(Identifier, NULL);}                             
-    | NATURAL                         { $$ = newnode(Natural, NULL); }                              
-    | CHRLIT                          { $$ = newnode(ChrLit, NULL); }                             
-    | DECIMAL                         { $$ = newnode(Decimal, NULL); }                            
+    | IDENTIFIER                      { $$ = newnode(Identifier, $1);}                             
+    | NATURAL                         { $$ = newnode(Natural, $1); }                              
+    | CHRLIT                          { $$ = newnode(ChrLit, $1); }                             
+    | DECIMAL                         { $$ = newnode(Decimal, $1); }                            
     | LPAR Expr RPAR                  { $$ = $2; }                             
     ;
 
-ExprList: Expr %prec HIGH {}
-        | ExprList COMMA Expr
+ExprList: Expr %prec HIGH             { $$ = newnode(Temp, NULL); 
+                                      addchild($$, $1); }
+        | ExprList COMMA Expr         { addchild($$, $3); }
         ;
-
 %%
