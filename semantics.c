@@ -6,6 +6,8 @@
 
 int semantic_errors = 0;
 int test = 0;
+char **list_declarations = NULL;
+int num_list_declarations = 0;
 
 struct symbol_list *symbol_table;
 struct symbol_list_list *scope_list = NULL, *first; 
@@ -15,15 +17,21 @@ int check_program(struct node *program) {
     symbol_table = (struct symbol_list *) malloc(sizeof(struct symbol_list));
     symbol_table->next = NULL;
     struct node_list *child = program->children;
-    while((child = child->next) != NULL)
+    while((child = child->next) != NULL){
         check_all(child->node, symbol_table, &scope_list);
-    free(symbol_table);
+    }
+    for (int i = 0; i < num_list_declarations; i++) {
+        free(list_declarations[i]);
+    }
+    free(list_declarations);
     return semantic_errors;
 }
 
 void check_all(struct node *temp, struct symbol_list *s_table, struct symbol_list_list **scope) {
     if (temp->category == Declaration){
         check_declaration(temp, s_table);
+    }else if(temp->category == FuncDeclaration){
+        check_func_declaration(temp, s_table);
     }else if(temp->category == FuncDefinition){
         check_func_definition(temp, s_table, scope);
     }
@@ -41,20 +49,35 @@ void check_declaration(struct node *temp, struct symbol_list *aux_table) {
     /* ToDo: scope should be free'd */
 }
 
-void reverse_scope(struct symbol_list_list **scope) {
-    struct symbol_list_list *prev = NULL;
-    struct symbol_list_list *current = *scope;
-    struct symbol_list_list *next = NULL;
+void check_func_declaration(struct node *temp, struct symbol_list *symbols_table) {
+    struct node *id = getchild(temp, 1);
+    check_expression(getchild(temp, 0), symbol_table);
 
-    while (current != NULL) {
-        next = current->next;
-        current->next = prev;
-        prev = current;
-        current = next;
+    if(search_symbol(symbol_table, id->token) == NULL) {
+        char *para = (char *) malloc(sizeof(char) * 100);
+        strcpy(para, "(");
+        struct symbol_list *symbol;
+        struct node_list *parameter = getchild(temp, 2)->children;
+        while((parameter = parameter->next) != NULL) {
+            check_expression(getchild(parameter->node, 0), NULL);
+            strcat (para, type_name(getchild(parameter->node, 0)->type));
+            if (parameter->next == NULL){
+                strcat (para, ")");
+            }else{
+                strcat (para, ",");
+            }
+        }
+        insert_symbol(symbol_table, id->token,  getchild(temp, 0)->type, para, temp);
+        list_declarations = (char **) realloc(list_declarations, (num_list_declarations + 1) * sizeof(char *));
+        list_declarations[num_list_declarations++] = strdup(id->token);
+        
+
+    } else {
+        printf("Identifier %s (%d:%d) already declared\n", id->token, id->token_line, id->token_column);
+        semantic_errors++;
     }
-
-    *scope = prev;
 }
+
 
 void check_func_definition(struct node *temp, struct symbol_list *symbols_table, struct symbol_list_list **scope) {
     struct node *id = getchild(temp, 1);
@@ -70,7 +93,7 @@ void check_func_definition(struct node *temp, struct symbol_list *symbols_table,
     aux_table->next = scope_uni->symbol_list;  // Set next to NULL initially
     scope_uni->symbol_list = aux_table;
 
-    if(search_symbol(symbol_table, id->token) == NULL) {
+    if(search_symbol(symbol_table, id->token) == NULL || find_declaration(id->token) == 1) {
         insert_symbol(scope_uni->symbol_list, "return", getchild(temp, 0)->type, "", temp);
 
         check_parameters(getchild(temp, 2), scope_uni->symbol_list);
@@ -78,9 +101,10 @@ void check_func_definition(struct node *temp, struct symbol_list *symbols_table,
         char *para = (char *) malloc(sizeof(char) * 100);
         strcpy(para, "(");
         struct symbol_list *symbol;
-        for(symbol = scope_uni->symbol_list->next->next; symbol != NULL; symbol = symbol->next){
-            strcat (para, type_name(symbol->type));
-            if (symbol->next == NULL){
+        struct node_list *parameter = getchild(temp, 2)->children;
+        while((parameter = parameter->next) != NULL) {
+            strcat (para, type_name(getchild(parameter->node, 0)->type));
+            if (parameter->next == NULL){
                 strcat (para, ")");
             }else{
                 strcat (para, ",");
@@ -88,6 +112,18 @@ void check_func_definition(struct node *temp, struct symbol_list *symbols_table,
         }
 
         insert_symbol(symbol_table, id->token,  getchild(temp, 0)->type, para, temp);
+
+        int pos = -1;
+        for (int i = 0; i < num_list_declarations; i++) {
+            if (list_declarations[i] != NULL && strcmp(list_declarations[i], id->token) == 0) {
+                pos = i;
+                break;
+            }
+        }
+        if (pos != -1) {
+            remove_declaration(pos);
+        }
+
     } else {
         printf("Identifier %s (%d:%d) already declared\n", id->token, id->token_line, id->token_column);
         semantic_errors++;
@@ -102,11 +138,13 @@ void check_parameters(struct node *parameters, struct symbol_list *scope) {
     while((parameter = parameter->next) != NULL) {
         check_expression(getchild(parameter->node, 0), scope);
         id = getchild(parameter->node, 1);
-        if(search_symbol(scope, id->token) == NULL) {
-            insert_symbol(scope, id->token, getchild(parameter->node, 0)->type, "\tparam", parameter->node);
-        } else {
-            printf("Identifier %s (%d:%d) already declared\n", id->token, id->token_line, id->token_column);
-            semantic_errors++;
+        if (id != NULL){
+            if(search_symbol(scope, id->token) == NULL) {
+                insert_symbol(scope, id->token, getchild(parameter->node, 0)->type, "\tparam", parameter->node);
+            } else {
+                printf("Identifier %s (%d:%d) already declared\n", id->token, id->token_line, id->token_column);
+                semantic_errors++;
+            }
         }
     }
 }
@@ -133,65 +171,47 @@ void check_expression(struct node *expression, struct symbol_list *scope) {
         case Char:
             expression->type = char_type;
             break;
-        case Identifier:
-            if(search_symbol(scope, expression->token) == NULL) {
-                printf("Variable %s (%d:%d) undeclared\n", expression->token, expression->token_line, expression->token_column);
-                semantic_errors++;
-            } else {
-                expression->type = search_symbol(scope, expression->token)->type;
-            }
-            break;
-        case Natural:
-            expression->type = int_type;
-            break;
-        case Decimal:
-            expression->type = double_type;
-            break;
-        case Call:
-            /*if(search_symbol(symbol_table, getchild(expression, 0)->token) == NULL || search_symbol(symbol_table, getchild(expression, 0)->token)->node->category != Function) {
-                printf("Function %s (%d:%d) undeclared\n", getchild(expression, 0)->token, getchild(expression, 0)->token_line, getchild(expression, 0)->token_column);
-                semantic_errors++;
-            } else {
-                struct node *arguments = getchild(expression, 1);
-                struct node *parameters = getchild(search_symbol(symbol_table, getchild(expression, 0)->token)->node, 1);
-                if(parameters != NULL && countchildren(arguments) != countchildren(parameters)) {
-                    printf("Calling %s (%d:%d) with incorrect arguments\n", getchild(expression, 0)->token, getchild(expression, 0)->token_line, getchild(expression, 0)->token_column);
-                    semantic_errors++;
-                } else {
-                    struct node_list *argument = arguments->children;
-                    while((argument = argument->next) != NULL)
-                        check_expression(argument->node, scope);
-                }
-            }*/
-            break;
-        case If:
-            check_expression(getchild(expression, 0), scope);
-            check_expression(getchild(expression, 1), scope);
-            check_expression(getchild(expression, 2), scope);
-            break;
-        case Add:
-        case Sub:
-        case Mul:
-        case Div:
-            check_expression(getchild(expression, 0), scope);
-            check_expression(getchild(expression, 1), scope);
+        case Void:  
+            expression->type = void_type;
             break;
         default:
             break;
     }
 }
-//para a lista ligada de listas ligadas
-/*int count_symbol_list(struct symbol_list_list *table_list) {
-    int count = 0;
-    struct symbol_list_list *aux_list;
-    for(aux_list = table_list; aux_list != NULL; aux_list = aux_list->next)
-        if(aux_list->next == NULL)
-            break;
-        else{
-            count++;
+
+int find_declaration(char *id) {
+    for (int i = 0; i < num_list_declarations; i++) {
+        if (strcmp(id, list_declarations[i]) == 0) {
+            return 1;
         }
-    return count;
-}*/
+    }
+    return 0;
+}
+
+void remove_declaration(int pos){
+    free(list_declarations[pos]);
+
+    for (int i = pos; i < num_list_declarations - 1; i++) {
+        list_declarations[i] = list_declarations[i + 1];
+    }
+
+    list_declarations[num_list_declarations - 1] = NULL;
+}
+
+void reverse_scope(struct symbol_list_list **scope) {
+    struct symbol_list_list *prev = NULL;
+    struct symbol_list_list *current = *scope;
+    struct symbol_list_list *next = NULL;
+
+    while (current != NULL) {
+        next = current->next;
+        current->next = prev;
+        prev = current;
+        current = next;
+    }
+
+    *scope = prev;
+}
 
 // insert a new symbol in the list, unless it is already there
 struct symbol_list *insert_symbol(struct symbol_list *table, char *identifier, enum type type, char *func_parameters, struct node *node) {
