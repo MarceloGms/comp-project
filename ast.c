@@ -81,6 +81,15 @@ void addTypeToDeclarators(struct node *declaratorList, struct node *type)
   }
 }
 
+struct node *getchild(struct node *parent, int position)
+{
+  struct node_list *children = parent->children;
+  while ((children = children->next) != NULL)
+    if (position-- == 0)
+      return children->node;
+  return NULL;
+}
+
 int countChildren(struct node *root)
 {
   int count = 0;

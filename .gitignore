@@ -7,5 +7,5 @@ y.output
 y.gv
 uccompiler.zip
 c/
-isolate_folders,sh
+isolate_folders.sh
 test_all.sh

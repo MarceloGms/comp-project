@@ -42,7 +42,7 @@ struct node *program;
 %}
 
 %%
-//CERTO 99%(FRED CONFIRM)
+
 FunctionsAndDeclarations: Declaration                                   { $$ = program = newnode(Program, NULL);
                                                                         inheritChilds(program, $1); }
                         | FunctionsAndDeclarations Declaration          {inheritChilds(program, $2); } 

@@ -6,6 +6,7 @@
 #include <string.h>
 #include "y.tab.h"
 #include "ast.h"
+#include "semantics.h"
 #define YY_USER_ACTION { line_syn = yylloc.first_line = line_lex; col_syn = yylloc.first_column = col_lex+1; }
 
 int yyparse(void);
@@ -31,7 +32,7 @@ decimal (({digit}*"."{digit}+([eE][+-]?{digit}+)?)|({digit}*"."([eE][+-]?{digit}
 RESERVED "["|"]"|"++"|"--"|"auto"|"break"|"case"|"const"|"continue"|"default"|"do"|"enum"|"extern"|"float"|"for"|"goto"|"inline"|"long"|"register"|"restrict"|"signed"|"sizeof"|"static"|"struct"|"switch"|"typedef"|"union"|"unsigned"|"volatile"|"_Bool"|"_Complex"|"_Imaginary"
 
 %%
-{RESERVED}                                            { col_lex += yyleng; if(l) printf("RESERVED(%s)\n", yytext); return RESERVED; }
+{RESERVED}                                            { col_lex += yyleng; if(l) printf("RESERVED(%s)\n", yytext); }
 "int"                                                 { col_lex += yyleng; if(l) printf("(%s)\n", yytext); return INT; }
 "double"                                              { col_lex += yyleng; if(l) printf("(%s)\n", yytext); return DOUBLE; }
 "if"                                                  { col_lex += yyleng; if(l) printf("(%s)\n", yytext); return IF; }
@@ -95,19 +96,24 @@ void yyerror(char *s) {
 } 
 
 int main(int argc, char **argv) {
-    if (argc > 1 && strcmp(argv[1], "-l") == 0){
-        l = 1;
-    }/*else if (argc > 1 && strcmp(argv[1], "-s") == 0){
-        s = 1;
-    }*/
     yyparse();
-    if(argc > 1 && strcmp(argv[1], "-t") == 0 && errors == 0) {
+    if (argc >= 2 && strcmp(argv[1], "-l") == 0){
+        l = 1;
+    }
+    if(argc >= 2 && strcmp(argv[1], "-t") == 0 && errors == 0) {
         //deallocate(program);
-        //printf("PEGA");
         show(program, 0);
     }
-
+    if(argc >= 2 && strcmp(argv[1], "-s") == 0 && errors == 0) {   /* "-s" prints the AST and symbol table */
+        errors += check_program(program);
+        if(errors == 0) {
+            show_symbol_table();
+            printf("\n");
+            show(program, 0);
+        }
+    }
     //deallocate(program);
-    yylex_destroy();  
+    //yylex_destroy();  
     return 0;
+
 }
