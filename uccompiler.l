@@ -105,12 +105,10 @@ int main(int argc, char **argv) {
         show(program, 0);
     }
     if(argc >= 2 && strcmp(argv[1], "-s") == 0 && errors == 0) {   /* "-s" prints the AST and symbol table */
-        errors += check_program(program);
-        if(errors == 0) {
-            show_symbol_table();
-            printf("\n");
-            show(program, 0);
-        }
+        check_program(program);
+        show_symbol_table();
+        printf("\n");
+        show(program, 0);
     }
     //deallocate(program);
     //yylex_destroy();  

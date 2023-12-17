@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "ast.h"
 
 // category names #defined in ast.h
@@ -11,6 +12,8 @@ struct node *newnode(enum category category, char *token)
   struct node *new = malloc(sizeof(struct node));
   new->category = category;
   new->token = token;
+  new->type = type_none;
+  new->isExpr = 0;
   new->children = malloc(sizeof(struct node_list));
   new->children->node = NULL;
   new->children->next = NULL;
@@ -47,10 +50,87 @@ void show(struct node *node, int depth)
 {
   for (int i = 0; i < depth; i++)
     printf("..");
-  if (node->token == NULL)
-    printf("%s\n", category_name[node->category]);
-  else
-    printf("%s(%s)\n", category_name[node->category], node->token);
+  char type[100];
+  strcpy(type, type_name(node->type));
+  if (node->p != NULL)
+    strcat(type, node->p);
+  if (node->token == NULL) {
+    if (node->isExpr != 1) {
+      printf("%s\n", category_name[node->category]);
+    } else {
+      switch (node->type)
+      {
+      case type_none:
+        printf("%s\n", category_name[node->category]);
+        break;  
+
+      case no_type:
+        printf("%s - undef\n", category_name[node->category]);
+        break;
+
+      case int_type:
+        printf("%s - %s\n", category_name[node->category], type);
+        break;
+
+      case double_type:
+        printf("%s - %s\n", category_name[node->category], type);
+        break;
+
+      case short_type:  
+        printf("%s - %s\n", category_name[node->category], type);
+        break;
+
+      case char_type:
+        printf("%s - %s\n", category_name[node->category], type);
+        break;
+
+      case void_type:
+        printf("%s - %s\n", category_name[node->category], type);
+        break;
+
+      default:
+        break;
+      }
+    }
+  }else{
+    if (node->isExpr != 1) {
+      printf("%s(%s)\n", category_name[node->category], node->token);
+    } else {
+      switch (node->type)
+      {
+      case type_none:
+        printf("%s(%s)\n", category_name[node->category], node->token);
+        break;
+
+      case no_type:
+        printf("%s(%s) - undef\n", category_name[node->category], node->token);
+        break;
+
+      case int_type:
+        printf("%s(%s) - %s\n", category_name[node->category], node->token, type);
+        break;
+
+      case double_type:
+        printf("%s(%s) - %s\n", category_name[node->category], node->token, type);
+        break;
+
+      case short_type:  
+        printf("%s(%s) - %s\n", category_name[node->category], node->token, type);
+        break;
+
+      case char_type:
+        printf("%s(%s) - %s\n", category_name[node->category], node->token, type);
+        break;
+
+      case void_type:
+        printf("%s(%s) - %s\n", category_name[node->category], node->token, type);
+        break;
+
+      default:
+        break;
+      }
+    }
+  }
 
   struct node_list *child = node->children;
   while ((child = child->next) != NULL)
